@@ -1,0 +1,56 @@
+module tb_data_multiplexer;
+
+reg clk;
+reg symbol_clk;
+reg [1:0] mode;
+reg [15:0] switch_clk_cycles;
+reg [7:0] DS1;
+reg [7:0] DS2;
+reg [7:0] DS3;
+wire [7:0] output_data;
+
+// Instantiate the module
+data_multiplexer uut (
+    .clk(clk),
+    .symbol_clk(symbol_clk),
+    .mode(mode),
+    .switch_clk_cycles(switch_clk_cycles),
+    .DS1(DS1),
+    .DS2(DS2),
+    .DS3(DS3),
+    .output_data(output_data)
+);
+
+initial begin
+    clk = 0;
+    symbol_clk = 0;
+    mode = 2'b00;
+    switch_clk_cycles = 16'h0003;
+    DS1 = 8'hAA;
+    DS2 = 8'h55;
+    DS3 = 8'h33;
+
+    #5; // Wait for a few cycles for stability
+
+    // Test mode 1
+    mode = 2'b01;
+    #20;
+    // Test mode 2
+    mode = 2'b10;
+    #20;
+    // Test mode 3
+    mode = 2'b11;
+    #20;
+
+    $stop; // End simulation
+end
+  
+  initial begin
+    $dumpfile("test.vcd");
+    $dumpvars;
+  end
+
+always #5 clk = ~clk;
+always #50 symbol_clk = ~symbol_clk;
+
+endmodule

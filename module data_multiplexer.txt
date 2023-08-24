@@ -1,0 +1,44 @@
+module data_multiplexer (
+    input wire clk,
+    input wire symbol_clk,
+    input wire [1:0] mode,
+    input wire [15:0] switch_clk_cycles,
+    input wire [7:0] DS1,
+    input wire [7:0] DS2,
+    input wire [7:0] DS3,
+    output reg [7:0] output_data
+);
+
+reg [15:0] counter;
+reg [1:0] mode_reg;
+reg [1:0] selected_stream;
+wire symbol_clk_period;
+assign symbol_clk_period = symbol_clk / 100000; // Calculating the symbol clock period in terms of internal clock cycles
+
+always @(posedge clk) begin
+    if (counter == switch_clk_cycles - 1) begin
+        counter <= 0;
+        mode_reg <= mode;
+      if (mode_reg == 2'b01) // Mode 1
+            selected_stream <= 2'b00;
+      else if (mode_reg == 2'b10) // Mode 2
+            selected_stream <= (symbol_clk_period >> 1) ? 2'b00 : 2'b01;
+      else if (mode_reg == 2'b11) // Mode 3
+        selected_stream <= (symbol_clk_period == 2'b00) ? 2'b00 : (symbol_clk_period == 2'b01) ? 2'b01 : 2'b10;
+    end else begin
+        counter <= counter + 1;
+        selected_stream <= selected_stream;
+        mode_reg <= mode_reg;
+    end
+end
+
+always @(posedge symbol_clk) begin
+    case (selected_stream)
+        2'b00: output_data <= DS1;
+        2'b01: output_data <= DS2;
+        2'b10: output_data <= DS3;
+        default: output_data <= 8'b0; // No stream selected
+    endcase
+end
+
+endmodule
